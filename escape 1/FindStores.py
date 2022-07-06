@@ -2,15 +2,26 @@ import json
 import requests
 import _thread
 import time
+import os
+import mysql连接
+#导入pymsql模块
+import pymysql
+#创建连接MYSQL的类
+sql_update=[]  #储存sql语句
+sql_values=[]  #储存values
+
+# 用户修改sku的值(车的型号)
+sku=2250201124
+
 
 def is_stock(code):
     params={
         #车的型号
-        'sku': 2252111125, #size  xs
+        'sku': sku, #size
         'shopno': code,
         # 需要定期更换user_id
         # 'user_id': 'RkJEODM1MjFENEZBNzU5MTE3RTUzMzBDMjlBNDNFNTAxQzgxRTJBNjY3MjE0MTdERTlDQkE3MTQ3NjA2NjM0Q0IwNDc0NEZBQTNEN0Q2OTI1QjE1RUMwNUU1NDBFNzA4NEExMEQyRkE1NjQ1MzNFRUE4QUIxNEVGNjg4NkVDQzQ0MDJFQkI1Qjk4RUFFMjEwRDQ4NTE5RjhCQzk2RUIwNgGIANTGIANT'
-        'user_id': 'M0IyNEYwNDE0N0YyNDhBNjY5NkYwMEExRkQ0NDc0OTM2MTUxODlEMjNGRDQwMTAwODJCMUFFNTg5QTZGMzY2MEEwRkJGMzU4MEQ3QkMwMzI0RkI1MEIyRTlGQ0UzNTk4N0JCQTFDQkI5NzkwODBFQTU5RURENzNEMzI0RTVFRkMyNTBFQTk3Njc5QjAzRTNBQTYzMDdFOEY1QTdDNzY1RgGIANTGIANT'
+        'user_id': 'OUU3RjZCOTdENkZDRTlDOUQ4QjY0QTk5RjJEMkFGQUNCQkE4MjI0NzI5RjFFMTBBQTdEODM4OEJFRTBBQ0RGQkU1Q0MyNTk2N0E2REJBN0FDOTNDMDYwRUUzRUMyRjQ3M0Q3QTg2ODdBMzk3QUVBMEVGMDgwOUQzQTM0MzcxRDBFRDExRUYyRUUzNkJDMUE4NTlENzJDOENGNjRERTA3NAGIANTGIANT'
     }
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
@@ -52,21 +63,81 @@ def st(threadName,deplay,page,per_page):
                 code = (ls['code'])
                 store_name = ls['name']
                 stock_num = is_stock(code)
-                # print("%s:%s" % (threadName, time.ctime(time.time())), store_name, stock_num, '位置:', ls['addr1'])
                 try:
                     if stock_num > 0:
+                        # 实例化数据库
+                        # 好不容易写完update语句,发现应该改成insert语句....
+
+                        values=(sku,threadName,time.ctime(time.time()),store_name,ls['addr1'],stock_num)
+                        sql_values.append(values)
                         print("%s:%s" % (threadName, time.ctime(time.time())), store_name, stock_num, '位置:',ls['addr1'])
                 except:
                         print('stock_num is none')
                         print(threadName, '没货')
                         _thread.exit()
+class TestMysql:
+    #初始化变量
+    def __init__(self,username,host,passwd,database,update_va):
+        self.username = username
+        self.host = host
+        self.passwd = passwd
+        self.database = database
+        self.update_va = update_va
+    # 创建数据库连接
+    def conn_mysql(self):
+        conn = pymysql.connect(user=self.username, host=self.host, password=self.passwd, db=self.database)
+        return conn
 
 
+    # 关闭数据库的提示信息
+    def close_mysql(self):
+        print("MySQL is Closed")
 
-# 创建30个多线程,每页100个数据
-for tr_num in range(1, 20):
-    _thread.start_new_thread(st,('线程: '+str(tr_num),1,tr_num,50))
+    def update_data(self):
+        self.conn = self.conn_mysql()
+        update_va= self.update_va
+        cur = self.conn.cursor()
+        insert_sql="INSERT INTO `escape_stock` (`sku`, `thread_name`, `Warehousing_ time`, `by_shop`, `by_address`, `in_quantity`) VALUES "
+        for ls in update_va:
+            ex_sql=insert_sql+str(ls)+";"
+            cur.execute(ex_sql)
+        self.conn.commit()  # 试了很多次,发现需要commit才行,否则执行不成功...
+        cur.close()  #关闭数据库链接
+        self.close_mysql()  #提示结束语句
+
+if __name__ == "__main__":
+    # 创建30个多线程,每页100个数据
+    for tr_num in range(1, 20):
+        _thread.start_new_thread(st, ('线程: ' + str(tr_num), 1, tr_num, 50))
+    #爬取20s后 存库操作
+    time.sleep(20)
+    print('爬取时间结束')
+    # _thread.exit()
+
+    print('进行存储操作')
+    #定义变量
+    username = 'root'.strip()
+    host = 'localhost'.strip()
+    passwd = '12345678'
+    database = 'escape'.strip()
+    update_va=sql_values
+    #使用try--except
+    try:
+        #创建TestMysql的实例
+        mysql = TestMysql(username,host,passwd,database,update_va)
+        mysql.conn_mysql()
+        mysql.update_data()
+    except pymysql.err.ProgrammingError as e:
+        print("Exception Error is %s"%(e))
+    except pymysql.err.OperationalError as e:
+        print("Exception Error is %s"%(e))
+
+# 摆烂了,到时间自动停止多线程任务
+# os.system('python3 mysql连接.py')
+
+# _thread.exit()
+#
+# while 1:
+#     pass
 
 
-while 1:
-    pass
