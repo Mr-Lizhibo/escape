@@ -3,7 +3,8 @@ import requests
 import _thread
 import time
 import os
-import mysql连接
+
+from config import global_config
 #导入pymsql模块
 import pymysql
 #创建连接MYSQL的类
@@ -11,17 +12,16 @@ sql_update=[]  #储存sql语句
 sql_values=[]  #储存values
 
 # 用户修改sku的值(车的型号)
-sku=2250201124
+# sku=global_config.getRaw('config','sku')
 
 
 def is_stock(code):
     params={
         #车的型号
-        'sku': sku, #size
+        'sku': global_config.getRaw('config','sku'), #size
         'shopno': code,
         # 需要定期更换user_id
-        # 'user_id': 'RkJEODM1MjFENEZBNzU5MTE3RTUzMzBDMjlBNDNFNTAxQzgxRTJBNjY3MjE0MTdERTlDQkE3MTQ3NjA2NjM0Q0IwNDc0NEZBQTNEN0Q2OTI1QjE1RUMwNUU1NDBFNzA4NEExMEQyRkE1NjQ1MzNFRUE4QUIxNEVGNjg4NkVDQzQ0MDJFQkI1Qjk4RUFFMjEwRDQ4NTE5RjhCQzk2RUIwNgGIANTGIANT'
-        'user_id': 'OUU3RjZCOTdENkZDRTlDOUQ4QjY0QTk5RjJEMkFGQUNCQkE4MjI0NzI5RjFFMTBBQTdEODM4OEJFRTBBQ0RGQkU1Q0MyNTk2N0E2REJBN0FDOTNDMDYwRUUzRUMyRjQ3M0Q3QTg2ODdBMzk3QUVBMEVGMDgwOUQzQTM0MzcxRDBFRDExRUYyRUUzNkJDMUE4NTlENzJDOENGNjRERTA3NAGIANTGIANT'
+        'user_id': global_config.getRaw('config','user_id')
     }
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
@@ -50,7 +50,7 @@ def st(threadName,deplay,page,per_page):
             # 配置筛选条件
             'per_page': per_page, #每页per_page个店铺
             'page': page,         #第page个店铺
-            # 'province':'110000', #北京
+            # 'province':global_config.getRaw('config','province'),
             # 'province':'440000',# 广东
             # 'province':'130000',# 河北
             # 'city':'1',
@@ -68,7 +68,7 @@ def st(threadName,deplay,page,per_page):
                         # 实例化数据库
                         # 好不容易写完update语句,发现应该改成insert语句....
 
-                        values=(sku,threadName,time.ctime(time.time()),store_name,ls['addr1'],stock_num)
+                        values=(global_config.getRaw('config','sku'),threadName,time.ctime(time.time()),store_name,ls['addr1'],stock_num)
                         sql_values.append(values)
                         print("%s:%s" % (threadName, time.ctime(time.time())), store_name, stock_num, '位置:',ls['addr1'])
                 except:
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     for tr_num in range(1, 20):
         _thread.start_new_thread(st, ('线程: ' + str(tr_num), 1, tr_num, 50))
     #爬取20s后 存库操作
-    time.sleep(20)
+    time.sleep(40)
     print('爬取时间结束')
     # _thread.exit()
 
