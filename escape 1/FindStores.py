@@ -116,10 +116,10 @@ if __name__ == "__main__":
 
     print('进行存储操作')
     #定义变量
-    username = 'root'.strip()
-    host = 'localhost'.strip()
-    passwd = '12345678'
-    database = 'escape'.strip()
+    username = global_config.getRaw('config','username').strip()
+    host = global_config.getRaw('config','host').strip()
+    passwd = global_config.getRaw('config','passwd')
+    database = global_config.getRaw('config','database').strip()
     update_va=sql_values
     #使用try--except
     try:
