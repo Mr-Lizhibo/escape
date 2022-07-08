@@ -50,7 +50,7 @@ def st(threadName,deplay,page,per_page):
             # 配置筛选条件
             'per_page': per_page, #每页per_page个店铺
             'page': page,         #第page个店铺
-            # 'province':global_config.getRaw('config','province'),
+            # 'province':global_config.getRaw('config','province')
             # 'province':'440000',# 广东
             # 'province':'130000',# 河北
             # 'city':'1',
@@ -70,10 +70,10 @@ def st(threadName,deplay,page,per_page):
 
                         values=(global_config.getRaw('config','sku'),threadName,time.ctime(time.time()),store_name,ls['addr1'],stock_num)
                         sql_values.append(values)
-                        print("%s:%s" % (threadName, time.ctime(time.time())), store_name, stock_num, '位置:',ls['addr1'])
+                        print("%s:%s" % (threadName, time.ctime(time.time())), store_name, '库存:',stock_num, ' 位置:',ls['addr1'])
                 except:
                         print('stock_num is none')
-                        print(threadName, '没货')
+
                         _thread.exit()
 class TestMysql:
     #初始化变量
